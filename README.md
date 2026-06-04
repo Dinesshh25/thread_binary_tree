@@ -5,6 +5,6 @@ Aplikasi ini di buat untuk menganalisis Struktur data Thread Binary Tree dengan 
 
 | NIM | Nama Anggota | Tanggung Jawab |
 | --- | --- | --- |
-| 251524053 | Kemal Ardian | |
+| 251524053 | Kemal Ardian | Build System, Main, Tree Body, Header Body |
 | 251524056 | Muhammad Iqbal  | Baris 1, Isi 3 |
 | Baris 2, Isi 1 | Baris 2, Isi 2 | Baris 2, Isi 3 |
