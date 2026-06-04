@@ -15,6 +15,12 @@ Tipe: Double-Threaded Binary Search Tree
 - rightThread == 0 -> right menunjuk ke child kanan
  */
 
+#define NULL 0
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
+#define boolean bool
+
 typedef struct ThreadNode {
   int data;
   struct ThreadNode *left;
@@ -35,13 +41,13 @@ void tree_init(ThreadedBinaryTree *tree);
 void tree_clear(ThreadedBinaryTree *tree);
 
 /* Cek apakah tree kosong. Return 1 jika kosong, 0 jika tidak */
-int tree_isEmpty(const ThreadedBinaryTree *tree);
+boolean tree_isEmpty(const ThreadedBinaryTree *tree);
 
 /* Insert nilai ke dalam threaded BST */
 void tree_insert(ThreadedBinaryTree *tree, int value);
 
 /* Cari nilai dalam tree. Return 1 jika ditemukan, 0 jika tidak */
-int tree_search(const ThreadedBinaryTree *tree, int value);
+boolean tree_search(const ThreadedBinaryTree *tree, int value);
 
 /* Hapus nilai dari tree */
 void tree_remove(ThreadedBinaryTree *tree, int value);
