@@ -1,34 +1,58 @@
 #include "threadbinary.h"
 
-
 void tree_init(ThreadedBinaryTree *tree){
     tree->header = (ThreadNode*)malloc(sizeof(ThreadNode));
-    tree->header->left = NULL;  // Akan di-set ke root saat insert pertama
-    tree->header->right = tree->header; // Right thread ke dirinya sendiri
-    tree->header->leftThread = 0; // Belum ada root, jadi bukan thread
-    tree->header->rightThread = 1; // Right thread ke dirinya sendiri
+    tree->header->left = NULL;
+    tree->header->right = tree->header;
+    tree->header->leftThread = 0;
+    tree->header->rightThread = 1;
     tree->root = NULL;
 }
 
 void tree_clear(ThreadedBinaryTree *tree){
     while (!tree_isEmpty(tree)) {
-        tree_remove(tree, tree->root->data); // Hapus node root secara berulang
+        tree_remove(tree, tree->root->data);
     }
 }
 
-/* Insert nilai ke dalam threaded BST */
+boolean tree_isEmpty(const ThreadedBinaryTree *tree){
+    return tree->root == NULL;
+}
+
+boolean tree_search(const ThreadedBinaryTree *tree, int value){
+    ThreadNode *current = tree->root;
+
+    while (current != NULL) {
+        if (value == current->data) {
+            return true;
+        } else if (value < current->data) {
+            if (current->leftThread == 0) {
+                current = current->left;
+            } else {
+                break;
+            }
+        } else {
+            if (current->rightThread == 0) {
+                current = current->right;
+            } else {
+                break;
+            }
+        }
+    }
+    return false;
+}
+
 void tree_insert(ThreadedBinaryTree *tree, int value){
     ThreadNode *newNode = (ThreadNode*)malloc(sizeof(ThreadNode));
     newNode->data = value;
-    newNode->leftThread = 1; // Awalnya thread
-    newNode->rightThread = 1; // Awalnya thread
+    newNode->leftThread = 1;
+    newNode->rightThread = 1;
 
     if (tree->root == NULL) {
-        // Insert pertama kali, jadi set root dan header
         tree->root = newNode;
-        tree->header->left = newNode; // Header left ke root
-        newNode->left = tree->header; // Thread ke header
-        newNode->right = tree->header; // Thread ke header
+        tree->header->left = newNode;
+        newNode->left = tree->header;
+        newNode->right = tree->header;
     } else {
         ThreadNode *current = tree->root;
         ThreadNode *parent = NULL;
@@ -37,132 +61,172 @@ void tree_insert(ThreadedBinaryTree *tree, int value){
             parent = current;
             if (value < current->data) {
                 if (current->leftThread == 0) {
-                    current = current->left; // Lanjut ke child kiri
+                    current = current->left;
                 } else {
-                    break; // Ketemu posisi insert
+                    break;
                 }
             } else {
                 if (current->rightThread == 0) {
-                    current = current->right; // Lanjut ke child kanan
+                    current = current->right;
                 } else {
-                    break; // Ketemu posisi insert
+                    break;
                 }
             }
         }
 
         if (value < parent->data) {
-            parent->leftThread = 0; // Bukan thread lagi
-            parent->left = newNode; // Set child kiri ke node baru
-            newNode->left = parent; // Thread ke parent sebagai predecessor
-            newNode->right = parent->right; // Thread ke successor yang lama
-            parent->rightThread = 1; // Parent sekarang punya thread kanan baru
-            parent->right = newNode; // Set thread kanan ke node baru
+            parent->leftThread = 0;
+            parent->left = newNode;
+            newNode->left = parent;
+            newNode->right = parent->right;
+            parent->rightThread = 1;
+            parent->right = newNode;
         } else {
-            parent->rightThread = 0; // Bukan thread lagi
-            parent->right = newNode; // Set child kanan ke node baru
-            newNode->right = parent; // Thread ke parent sebagai successor
-            newNode->left = parent->left; // Thread ke predecessor yang lama
-            parent->leftThread = 1; // Parent sekarang punya thread kiri baru
-            parent->left = newNode; // Set thread kiri ke node baru
+            parent->rightThread = 0;
+            parent->right = newNode;
+            newNode->right = parent;
+            newNode->left = parent->left;
+            parent->leftThread = 1;
+            parent->left = newNode;
         }
     }
-}
-
-boolean tree_search(const ThreadedBinaryTree *tree, int value){
-    ThreadNode *current = tree->root;
-
-    while (current != NULL) {
-        if (value == current->data) {
-            return true; // Ditemukan
-        } else if (value < current->data) {
-            if (current->leftThread == 0) {
-                current = current->left; // Lanjut ke child kiri
-            } else {
-                break; // Tidak ditemukan
-            }
-        } else {
-            if (current->rightThread == 0) {
-                current = current->right; // Lanjut ke child kanan
-            } else {
-                break; // Tidak ditemukan
-            }
-        }
-    }
-    return false; // Tidak ditemukan
-}
-
-boolean tree_isEmpty(const ThreadedBinaryTree *tree){
-    return tree->root == NULL;
-}
-
-void tree_inorder(const ThreadedBinaryTree *tree){
-    ThreadNode *current = tree->header->left; // Mulai dari root
-
 }
 
 void tree_remove(ThreadedBinaryTree *tree, int value){
+    if (tree_isEmpty(tree)) return;
+
     ThreadNode *current = tree->root;
-    ThreadNode *parent = NULL;
-    
-    while (tree_search(tree, value)) {
-        parent = current;
+    ThreadNode *parent = tree->header;
+
+    while (current != NULL && current->data != value) {
         if (value < current->data) {
-            if (current->leftThread == 0) {
-                current = current->left; // Lanjut ke child kiri
-            } else {
-                return; // Tidak ditemukan
-            }
+            if (current->leftThread == 1) return;
+            parent = current;
+            current = current->left;
         } else {
-            if (current->rightThread == 0) {
-                current = current->right; // Lanjut ke child kanan
-            } else {
-                return; // Tidak ditemukan
+            if (current->rightThread == 1) return;
+            parent = current;
+            current = current->right;
+        }
+    }
+
+    if (current == NULL) return;
+
+    // Kasus 1: Node memiliki dua child
+    if (current->leftThread == 0 && current->rightThread == 0) {
+        // Cari predecessor (paling kanan dari subtree kiri)
+        ThreadNode *pred = current->left;
+        ThreadNode *predParent = current;
+        while (pred->rightThread == 0) {
+            predParent = pred;
+            pred = pred->right;
+        }
+        current->data = pred->data;
+        current = pred;
+        parent = predParent;
+    }
+
+    // Kasus 2 & 3: Node memiliki 0 atau 1 child
+    ThreadNode *child = (current->leftThread == 1) ? current->right : current->left;
+
+    if (current == parent->left) {
+        parent->leftThread = 1;
+        parent->left = child;
+    } else if (current == parent->right) {
+        parent->rightThread = 1;
+        parent->right = child;
+    } else if (current == tree->root) {
+        tree->root = child;
+        if (child != NULL) {
+            tree->header->left = child;
+        } else {
+            tree->header->left = NULL;
+        }
+    }
+
+    free(current);
+}
+
+void tree_inorder(const ThreadedBinaryTree *tree){
+    if (tree_isEmpty(tree)) return;
+
+    ThreadNode *current = tree->root;
+
+    // Cari node paling kiri (first in inorder)
+    while (current->leftThread == 0) {
+        current = current->left;
+    }
+
+    // Traversing menggunakan thread
+    while (current != tree->header) {
+        printf("%d ", current->data);
+
+        if (current->rightThread == 1) {
+            current = current->right;
+        } else {
+            current = current->right;
+            while (current->leftThread == 0) {
+                current = current->left;
             }
         }
     }
 }
 
 void tree_preorder(const ThreadedBinaryTree *tree){
-    ThreadNode *current = tree->header->left; // Mulai dari root
+    if (tree_isEmpty(tree)) return;
 
-        while (current != tree->header) {
-            printf("%d ", current->data); // Cetak data
-    
-            if (current->leftThread == 0) {
-                current = current->left; // Lanjut ke child kiri
-            } else if (current->rightThread == 0) {
-                current = current->right; // Lanjut ke child kanan
-            } else {
-                // Kembali ke parent melalui thread
-                while (current != tree->header && current->rightThread == 1) {
-                    current = current->right; // Lanjut ke successor melalui thread
-                }
-                if (current != tree->header) {
-                    current = current->right; // Lanjut ke child kanan setelah thread
-                }
-            }
-        }
-}
-
-void tree_display(const ThreadedBinaryTree *tree){
-    ThreadNode *current = tree->header->left; // Mulai dari root
+    ThreadNode *current = tree->root;
 
     while (current != tree->header) {
-        printf("Node: %d, LeftThread: %d, RightThread: %d\n", current->data, current->leftThread, current->rightThread);
-        
+        printf("%d ", current->data);
+
         if (current->leftThread == 0) {
-            current = current->left; // Lanjut ke child kiri
-        } else if (current->rightThread == 0) {
-            current = current->right; // Lanjut ke child kanan
+            current = current->left;
         } else {
-            // Kembali ke parent melalui thread
-            while (current != tree->header && current->rightThread == 1) {
-                current = current->right; // Lanjut ke successor melalui thread
+            while (current->rightThread == 1 && current->right != tree->header) {
+                current = current->right;
             }
-            if (current != tree->header) {
-                current = current->right; // Lanjut ke child kanan setelah thread
+            if (current->right != tree->header) {
+                current = current->right;
+            } else {
+                break;
             }
         }
     }
+}
 
+void tree_display(const ThreadedBinaryTree *tree){
+    if (tree_isEmpty(tree)) {
+        printf("Tree kosong.\n");
+        return;
+    }
+
+    printf("Struktur Threaded Binary Tree:\n");
+    printf("Header -> left: %s, right: %s\n",
+           tree->header->left ? "node" : "NULL",
+           tree->header->right == tree->header ? "header" : "node");
+
+    ThreadNode *current = tree->root;
+
+    // Cari node paling kiri
+    while (current->leftThread == 0) {
+        current = current->left;
+    }
+
+    // Traversing semua node
+    while (current != tree->header) {
+        printf("Node: %d | Left: %s | Right: %s\n",
+               current->data,
+               current->leftThread == 1 ? "thread" : "child",
+               current->rightThread == 1 ? "thread" : "child");
+
+        if (current->rightThread == 1) {
+            current = current->right;
+        } else {
+            current = current->right;
+            while (current->leftThread == 0) {
+                current = current->left;
+            }
+        }
+    }
 }
