@@ -58,6 +58,9 @@ void tree_inorder(const ThreadedBinaryTree *tree);
 /* Traversal preorder (cetak ke layar) */
 void tree_preorder(const ThreadedBinaryTree *tree);
 
+/* Traversal postorder (cetak ke layar) */
+void tree_postorder(const ThreadedBinaryTree *tree);
+
 /* Tampilkan struktur tree secara detail */
 void tree_display(const ThreadedBinaryTree *tree);
 

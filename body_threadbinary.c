@@ -155,7 +155,13 @@ void tree_remove(ThreadedBinaryTree *tree, int value){
     } else if (current == tree->root) {
         tree->root = child;
         if (child != NULL) {
-            tree->header->left = child;
+            ThreadNode *inorderPred = child;
+            while (inorderPred->rightThread == 0) {
+                inorderPred = inorderPred->right;
+            }
+            inorderPred->rightThread = 1;
+            inorderPred->right = tree->header;
+            tree->header->left = inorderPred;
         } else {
             tree->header->left = NULL;
         }
@@ -210,6 +216,18 @@ void tree_preorder(const ThreadedBinaryTree *tree){
             }
         }
     }
+}
+
+static void postorder_helper(ThreadNode *node) {
+    if (node == NULL) return;
+    if (node->leftThread == 0) postorder_helper(node->left);
+    if (node->rightThread == 0) postorder_helper(node->right);
+    printf("%d ", node->data);
+}
+
+void tree_postorder(const ThreadedBinaryTree *tree){
+    if (tree_isEmpty(tree)) return;
+    postorder_helper(tree->root);
 }
 
 void tree_display(const ThreadedBinaryTree *tree){

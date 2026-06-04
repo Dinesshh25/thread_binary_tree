@@ -13,6 +13,7 @@ int main(int argc, char *argv[]){
         printf("4. Inorder Traversal\n");
         printf("5. Preorder Traversal\n");
         printf("6. Display Tree\n");
+        printf("7. Postorder Traversal\n");
         printf("0. Exit\n");
         printf("Pilih menu: ");
         scanf("%d", &menu);
@@ -50,6 +51,11 @@ int main(int argc, char *argv[]){
             case 6:
                 printf("Struktur Tree:\n");
                 tree_display(&tree);
+                break;
+            case 7:
+                printf("Postorder Traversal: ");
+                tree_postorder(&tree);
+                printf("\n");
                 break;
             case 0:
                 tree_clear(&tree); // Bersihkan memori sebelum keluar
