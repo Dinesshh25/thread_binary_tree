@@ -2,9 +2,6 @@
 #define THREADBINARY_H
 
 /*
-threadbinary.h - Threaded Binary Tree (Double-Threaded BST)
-Bahasa C
-
 Threaded Binary Tree adalah variasi binary tree di mana
 pointer NULL digantikan dengan thread yang menunjuk
 ke inorder predecessor (left thread) atau inorder
@@ -27,8 +24,8 @@ typedef struct ThreadNode {
 } ThreadNode;
 
 typedef struct {
-  ThreadNode *root;
-  ThreadNode *header;
+    ThreadNode* root;   /* pointer ke node root                     */
+    ThreadNode* header; /* dummy header: left->root, right->self    */
 } ThreadedBinaryTree;
 
 /* Inisialisasi tree kosong */
