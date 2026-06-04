@@ -59,4 +59,6 @@ int main(){
                 printf("Menu tidak valid. Silakan pilih lagi.\n");
         }
     } while (menu != 0);
+
+    return 0;
 }
