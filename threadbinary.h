@@ -22,31 +22,31 @@ Tipe: Double-Threaded Binary Search Tree
 #define boolean bool
 
 typedef struct ThreadNode {
-  int data;
-  struct ThreadNode *left;
-  struct ThreadNode *right;
-  int leftThread;  /* 1: left = thread ke inorder predecessor   */
-  int rightThread; /* 1: right = thread ke inorder successor    */
+    int data;
+    struct ThreadNode *left;
+    struct ThreadNode *right;
+    int leftThread;   /* 1 = left adalah thread ke inorder predecessor */
+    int rightThread;  /* 1 = right adalah thread ke inorder successor */
 } ThreadNode;
 
 typedef struct {
-    ThreadNode* root;   /* pointer ke node root                     */
-    ThreadNode* header; /* dummy header: left->root, right->self    */
+    ThreadNode *root;   /* pointer ke node root */
+    ThreadNode *header; /* dummy header: left->root, right->self */
 } ThreadedBinaryTree;
 
 /* Inisialisasi tree kosong */
 void tree_init(ThreadedBinaryTree *tree);
 
-/* Dealokasi seluruh node */
+/* Dealokasi seluruh node (termasuk header) */
 void tree_clear(ThreadedBinaryTree *tree);
 
-/* Cek apakah tree kosong. Return 1 jika kosong, 0 jika tidak */
+/* Cek apakah tree kosong. Return true jika kosong, false jika tidak */
 boolean tree_isEmpty(const ThreadedBinaryTree *tree);
 
 /* Insert nilai ke dalam threaded BST */
 void tree_insert(ThreadedBinaryTree *tree, int value);
 
-/* Cari nilai dalam tree. Return 1 jika ditemukan, 0 jika tidak */
+/* Cari nilai dalam tree. Return true jika ditemukan, false jika tidak */
 boolean tree_search(const ThreadedBinaryTree *tree, int value);
 
 /* Hapus nilai dari tree */
