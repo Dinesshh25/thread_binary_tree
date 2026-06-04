@@ -16,7 +16,15 @@ int main(int argc, char *argv[]){
         printf("7. Postorder Traversal\n");
         printf("0. Exit\n");
         printf("Pilih menu: ");
-        scanf("%d", &menu);
+        if (scanf("%d", &menu) != 1) {
+            printf("Error: Input harus berupa angka!\n");
+        
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF);
+            
+            menu = -1;
+            continue;
+        }
 
         switch (menu) {
             case 1:
