@@ -20,6 +20,14 @@ static ThreadNode* inorder_successor(ThreadNode *node) {
     return curr;
 }
 
+/* Recursive postorder deletion helper (does not free header) */
+static void delete_subtree(ThreadNode *node) {
+    if (node == NULL) return;
+    if (node->leftThread == 0) delete_subtree(node->left);
+    if (node->rightThread == 0) delete_subtree(node->right);
+    free(node);
+}
+
 void tree_init(ThreadedBinaryTree *tree) {
     tree->header = (ThreadNode*)malloc(sizeof(ThreadNode));
     tree->header->left = tree->header;   /* left thread to itself (empty) */
@@ -29,13 +37,6 @@ void tree_init(ThreadedBinaryTree *tree) {
     tree->root = NULL;
 }
 
-/* Recursive postorder deletion helper (does not free header) */
-static void delete_subtree(ThreadNode *node) {
-    if (node == NULL) return;
-    if (node->leftThread == 0) delete_subtree(node->left);
-    if (node->rightThread == 0) delete_subtree(node->right);
-    free(node);
-}
 void tree_clear(ThreadedBinaryTree *tree) {
     if (tree->root != NULL) {
         delete_subtree(tree->root);
@@ -119,32 +120,40 @@ void tree_insert(ThreadedBinaryTree *tree, int value) {
                 break;
             }
         } else {
-            /* Duplicate value: free newNode and return (or handle as you wish) */
+            /* Duplicate value: free newNode and return */
             free(newNode);
             return;
         }
     }
 
     if (direction == 0) {  /* Insert as left child */
-        newNode->left = parent->left;     /* thread to inorder predecessor */
-        newNode->right = parent;          /* thread to parent (successor) */
+        /* predecessor = parent->left (which is a thread) */
+        ThreadNode *pred = parent->left;
+        newNode->left = pred;       /* thread to inorder predecessor */
+        newNode->right = parent;    /* thread to parent (successor) */
         parent->left = newNode;
-        parent->leftThread = 0;
+        parent->leftThread = 0;     /* left is now a real child */
 
-        /* Update the predecessor's right thread to point to newNode */
-        ThreadNode *pred = newNode->left;
-        pred->right = newNode;
-        pred->rightThread = 1;  /* still a thread, now points to newNode */
+        /* Only update predecessor's right thread if it was a thread */
+        if (pred->rightThread == 1) {
+            pred->right = newNode;
+            pred->rightThread = 1;   /* still a thread, now points to newNode */
+        }
+        /* else: predecessor already has a real right child – do nothing */
     } else {  /* Insert as right child */
-        newNode->right = parent->right;   /* thread to inorder successor */
-        newNode->left = parent;           /* thread to parent (predecessor) */
+        /* successor = parent->right (which is a thread) */
+        ThreadNode *succ = parent->right;
+        newNode->right = succ;      /* thread to inorder successor */
+        newNode->left = parent;     /* thread to parent (predecessor) */
         parent->right = newNode;
-        parent->rightThread = 0;
+        parent->rightThread = 0;    /* right is now a real child */
 
-        /* Update the successor's left thread to point to newNode */
-        ThreadNode *succ = newNode->right;
-        succ->left = newNode;
-        succ->leftThread = 1;
+        /* Only update successor's left thread if it was a thread */
+        if (succ->leftThread == 1) {
+            succ->left = newNode;
+            succ->leftThread = 1;    /* still a thread, now points to newNode */
+        }
+        /* else: successor already has a real left child – do nothing */
     }
 }
 
@@ -250,20 +259,19 @@ void tree_remove(ThreadedBinaryTree *tree, int value) {
         if (child != NULL) {
             /* Find inorder predecessor of child (the node that should have its right thread pointing to child) */
             ThreadNode *pred = inorder_predecessor(child);
-            pred->right = child;
-            pred->rightThread = 1;
-
+            if (pred != tree->header) {
+                pred->right = child;
+                pred->rightThread = 1;
+            }
             /* Find inorder successor of child */
             ThreadNode *succ = inorder_successor(child);
-            succ->left = child;
-            succ->leftThread = 1;
+            if (succ != tree->header) {
+                succ->left = child;
+                succ->leftThread = 1;
+            }
         } else {
             /* No child: the parent's thread pointers are already set,
                but we need to update the neighbour's thread that used to point to curr */
-            /* For left removal: the predecessor (which is parent->left before deletion)
-               should now point to parent as its successor? Actually, if curr had no child,
-               its predecessor's right thread pointed to curr, and successor's left thread pointed to curr.
-               We need to redirect those to each other. */
             ThreadNode *pred = inorder_predecessor(curr);
             ThreadNode *succ = inorder_successor(curr);
             if (pred != tree->header) {
@@ -321,7 +329,6 @@ void tree_preorder(const ThreadedBinaryTree *tree) {
     }
 }
 
-/* Recursive postorder helper (uses child links only, ignores threads) */
 static void postorder_helper(ThreadNode *node) {
     if (node == NULL) return;
     if (node->leftThread == 0) postorder_helper(node->left);
@@ -337,40 +344,20 @@ void tree_postorder(const ThreadedBinaryTree *tree) {
 void tree_display(const ThreadedBinaryTree *tree) {
     if (tree_isEmpty(tree)) {
         printf("Tree kosong.\n");
-        printf("Header: left->%s, right->header (self)\n",
-               tree->header->left == tree->header ? "header" : "?");
         return;
     }
 
-    printf("Struktur Threaded Binary Tree:\n");
-    printf("Header -> left: %s, right: header (self)\n",
-           tree->header->leftThread == 0 ? "root (child)" : "thread");
-    printf("Root: %d\n", tree->root->data);
+    printf("\n=== Threaded Binary Tree Structure ===\n");
 
-    /* Traverse inorder and show details */
+    /* Traverse inorder to display all nodes */
     ThreadNode *curr = tree->root;
+    /* Go to leftmost node */
     while (curr->leftThread == 0)
         curr = curr->left;
+
     while (curr != tree->header) {
-        printf("Node %d: left -> ", curr->data);
-        if (curr->leftThread == 1) {
-            if (curr->left == tree->header)
-                printf("header");
-            else
-                printf("%d (thread)", curr->left->data);
-        } else {
-            printf("%d (child)", curr->left->data);
-        }
-        printf(", right -> ");
-        if (curr->rightThread == 1) {
-            if (curr->right == tree->header)
-                printf("header");
-            else
-                printf("%d (thread)", curr->right->data);
-        } else {
-            printf("%d (child)", curr->right->data);
-        }
-        printf("\n");
+        printf("Node: %d, LeftThread: %d, RightThread: %d\n",
+               curr->data, curr->leftThread, curr->rightThread);
 
         if (curr->rightThread == 1)
             curr = curr->right;
@@ -380,4 +367,5 @@ void tree_display(const ThreadedBinaryTree *tree) {
                 curr = curr->left;
         }
     }
+    printf("=====================================\n");
 }
