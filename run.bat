@@ -1,22 +1,29 @@
 @echo off
-echo Building ThreadBinaryTree...
+REM Compilation script for ThreadBinaryTree
 
-mkdir build 2>nul
-cd build
-cmake ..
-cmake --build . --config Debug
+REM Set compilation flags
+set CC=gcc
+set CFLAGS=-std=c11 -Wall -Wextra
 
-if exist Debug\ThreadBinaryTree.exe (
+REM Source files
+set SOURCES=main.c body_threadbinary.c
+
+REM Header files
+set HEADERS=threadbinary.h
+
+REM Output executable name
+set EXECUTABLE=ThreadBinaryTree.exe
+
+REM Compile
+%CC% %CFLAGS% %SOURCES% -o %EXECUTABLE%
+
+REM Check if compilation was successful
+if %errorlevel% equ 0 (
+    echo Compilation successful!
+    echo Running %EXECUTABLE%...
     echo.
-    echo Running ThreadBinaryTree...
-    echo ==============================
-    Debug\ThreadBinaryTree.exe
-    echo.
-    echo ==============================
-    pause
+    %EXECUTABLE%
 ) else (
-    echo Build failed!
+    echo Compilation failed!
     pause
 )
-
-cd ..
