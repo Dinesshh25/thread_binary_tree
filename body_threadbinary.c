@@ -10,8 +10,13 @@ void tree_init(ThreadedBinaryTree *tree){
 }
 
 void tree_clear(ThreadedBinaryTree *tree){
-    while (!tree_isEmpty(tree)) {
-        tree_remove(tree, tree->root->data);
+    while (tree->root != NULL) {
+        // Cari node paling kiri (pertama dalam inorder)
+        ThreadNode *n = tree->root;
+        while (n->leftThread == 0) {
+            n = n->left;
+        }
+        tree_remove(tree, n->data);
     }
 }
 
@@ -75,19 +80,31 @@ void tree_insert(ThreadedBinaryTree *tree, int value){
         }
 
         if (value < parent->data) {
+            ThreadNode *pred = parent->left;
+            while (pred->leftThread == 0) {
+                pred = pred->left;
+            }
+
             parent->leftThread = 0;
             parent->left = newNode;
-            newNode->left = parent;
-            newNode->right = parent->right;
-            parent->rightThread = 1;
-            parent->right = newNode;
+            newNode->left = pred;
+            newNode->leftThread = 1;
+            newNode->right = parent;
+            newNode->rightThread = 1;
+            pred->left = newNode;
         } else {
+            ThreadNode *succ = parent->right;
+            while (succ->leftThread == 0) {
+                succ = succ->left;
+            }
+
             parent->rightThread = 0;
             parent->right = newNode;
-            newNode->right = parent;
-            newNode->left = parent->left;
-            parent->leftThread = 1;
-            parent->left = newNode;
+            newNode->right = succ;
+            newNode->rightThread = 1;
+            newNode->left = parent;
+            newNode->leftThread = 1;
+            succ->left = newNode;
         }
     }
 }

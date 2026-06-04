@@ -1,6 +1,6 @@
 #include "threadbinary.h"
 
-int main(){
+int main(int argc, char *argv[]){
     int menu, value;
     ThreadedBinaryTree tree;
     tree_init(&tree);
