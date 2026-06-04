@@ -11,9 +11,9 @@ void tree_init(ThreadedBinaryTree *tree){
 }
 
 void tree_clear(ThreadedBinaryTree *tree){
-    thread_clear_helper(tree->header->left); // Hapus semua node mulai dari root
-    free(tree->header); // Hapus header
-    tree->root = NULL;
+    while (!tree_isEmpty(tree)) {
+        tree_remove(tree, tree->root->data); // Hapus node root secara berulang
+    }
 }
 
 /* Insert nilai ke dalam threaded BST */
@@ -98,19 +98,6 @@ boolean tree_isEmpty(const ThreadedBinaryTree *tree){
 void tree_inorder(const ThreadedBinaryTree *tree){
     ThreadNode *current = tree->header->left; // Mulai dari root
 
-    while (current != tree->header) {
-        // Kunjungi node saat leftThread == 1 (thread ke predecessor)
-        while (current->leftThread == 0) {
-            current = current->left; // Lanjut ke child kiri
-        }
-        printf("%d ", current->data); // Cetak data
-
-        if (current->rightThread == 1) {
-            current = current->right; // Lanjut ke successor melalui thread
-        } else {
-            current = current->right; // Lanjut ke child kanan
-        }
-    }
 }
 
 void tree_remove(ThreadedBinaryTree *tree, int value){
